@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,54 @@
 
 package com.jfinal.upload;
 
+import java.io.File;
+import com.jfinal.kit.PathKit;
+import com.jfinal.kit.StrKit;
+import com.oreilly.servlet.multipart.FileRenamePolicy;
+
 /**
  * OreillyCos.
  */
 public class OreillyCos {
 	
-	private static Boolean isMultipartSupported = null;
-	
-	public static boolean isMultipartSupported() {
-		if (isMultipartSupported == null) {
-			detectOreillyCos();
-		}
-		return isMultipartSupported;
-	}
-	
 	public static void init(String saveDirectory, int maxPostSize, String encoding) {
-		if (isMultipartSupported()) {
-			MultipartRequest.init(saveDirectory, maxPostSize, encoding);
-		}
-	}
-	
-	private static void detectOreillyCos() {
 		try {
 			Class.forName("com.oreilly.servlet.MultipartRequest");
-			isMultipartSupported = true;
+			doInit(saveDirectory, maxPostSize, encoding);
 		} catch (ClassNotFoundException e) {
-			isMultipartSupported = false;
+			
 		}
 	}
+	
+	public static void setFileRenamePolicy(FileRenamePolicy fileRenamePolicy) {
+		if (fileRenamePolicy == null)
+			throw new IllegalArgumentException("fileRenamePolicy can not be null.");
+		MultipartRequest.fileRenamePolicy = fileRenamePolicy;
+	}
+	
+	private static void doInit(String saveDirectory, int maxPostSize, String encoding) {
+		String dir;
+		if (StrKit.isBlank(saveDirectory)) {
+			dir = PathKit.getWebRootPath() + File.separator + "upload";
+		}
+		else if (isAbsolutelyPath(saveDirectory)) {
+			dir = saveDirectory;
+		}
+		else {
+			dir = PathKit.getWebRootPath() + File.separator + saveDirectory;
+		}
+		
+		// add "/" postfix
+		if (dir.endsWith("/") == false && dir.endsWith("\\") == false) {
+			dir = dir + File.separator;
+		}
+		
+		MultipartRequest.init(dir, maxPostSize, encoding);
+	}
+	
+	private static boolean isAbsolutelyPath(String saveDirectory) {
+		return saveDirectory.startsWith("/") || saveDirectory.indexOf(":") == 1;
+	}
 }
+
+

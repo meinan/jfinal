@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,21 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import com.jfinal.core.Controller;
+import com.jfinal.kit.HashKit;
 import com.jfinal.kit.StrKit;
 import com.jfinal.render.Render;
 
+/**
+ * CaptchaRender
+ */
 public class CaptchaRender extends Render {
 	
-	private static final long serialVersionUID = -916701543933591834L;
-	private static final int WIDTH = 85, HEIGHT = 20;
+	private static final int WIDTH = 80, HEIGHT = 26;
 	private static final String[] strArr = {"3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"};
 	
 	private String randomCodeKey;
@@ -47,7 +49,7 @@ public class CaptchaRender extends Render {
 	public void render() {
 		BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 		String vCode = drawGraphic(image);
-		vCode = encrypt(vCode);
+		vCode = HashKit.md5(vCode);
 		Cookie cookie = new Cookie(randomCodeKey, vCode);
 		cookie.setMaxAge(-1);
 		cookie.setPath("/");
@@ -70,7 +72,7 @@ public class CaptchaRender extends Render {
 		}
 	}
 
-	private String drawGraphic(BufferedImage image){
+	private String drawGraphic(BufferedImage image) {
 		// 获取图形上下文
 		Graphics g = image.createGraphics();
 		// 生成随机类
@@ -91,15 +93,15 @@ public class CaptchaRender extends Render {
 			g.drawLine(x, y, x + xl, y + yl);
 		}
 
-		// 取随机产生的认证码(6位数字)
+		// 取随机产生的认证码(4位数字)
 		String sRand = "";
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 4; i++) {
 			String rand = String.valueOf(strArr[random.nextInt(strArr.length)]);
 			sRand += rand;
 			// 将认证码显示到图象中
 			g.setColor(new Color(20 + random.nextInt(110), 20 + random.nextInt(110), 20 + random.nextInt(110)));
 			// 调用函数出来的颜色相同，可能是因为种子太接近，所以只能直接生成
-			g.drawString(rand, 13 * i + 6, 16);
+			g.drawString(rand, 16 * i + 11, 19);
 		}
 
 		// 图象生效
@@ -123,44 +125,17 @@ public class CaptchaRender extends Render {
 		return new Color(r, g, b);
 	}
 	
-	private static final String encrypt(String srcStr) {
-		try {
-			String result = "";
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			byte[] bytes = md.digest(srcStr.getBytes("utf-8"));
-			for(byte b:bytes){
-				String hex = Integer.toHexString(b&0xFF).toUpperCase();
-				result += ((hex.length() ==1 ) ? "0" : "") + hex;
-			}
-			return result;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-//	public static boolean validate(String inputRandomCode, String rightRandomCode){
-//		if (StringKit.isBlank(inputRandomCode))
+//	public static boolean validate(String inputRandomCode, String rightRandomCode) {
+//		if (StrKit.isBlank(inputRandomCode))
 //			return false;
-//		try {
-//			inputRandomCode = encrypt(inputRandomCode);
-//			return inputRandomCode.equals(rightRandomCode);
-//		}catch(Exception e){
-//			e.printStackTrace();
-//			return false;
-//		}
+//		return inputRandomCode.equalsIgnoreCase(rightRandomCode);
 //	}
 	
-	// TODO 需要改进
 	public static boolean validate(Controller controller, String inputRandomCode, String randomCodeKey) {
 		if (StrKit.isBlank(inputRandomCode))
 			return false;
-		try {
-			inputRandomCode = encrypt(inputRandomCode);
-			return inputRandomCode.equals(controller.getCookie(randomCodeKey));
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
+		inputRandomCode = HashKit.md5(inputRandomCode);
+		return inputRandomCode.equalsIgnoreCase(controller.getCookie(randomCodeKey));
 	}
 }
 

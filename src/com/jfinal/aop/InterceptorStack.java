@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.jfinal.aop;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.jfinal.core.ActionInvocation;
 
 /**
  * InterceptorStack.
@@ -52,8 +51,8 @@ public abstract class InterceptorStack implements Interceptor {
 		return this;
 	}
 	
-	public final void intercept(ActionInvocation ai) {
-		new ActionInvocationWrapper(ai, inters).invoke();
+	public final void intercept(Invocation inv) {
+		new InvocationWrapper(inv, inters).invoke();
 	}
 	
 	public abstract void config();

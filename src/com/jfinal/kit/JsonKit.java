@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import com.jfinal.plugin.activerecord.Record;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class JsonKit {
 	
-	private static int convertDepth = 8;
+	private static int convertDepth = 15;
 	private static String timestampPattern = "yyyy-MM-dd HH:mm:ss";
 	private static String datePattern = "yyyy-MM-dd";
 	
@@ -62,7 +62,7 @@ public class JsonKit {
 		JsonKit.datePattern = datePattern;
 	}
 	
-	public static String mapToJson(Map map, int depth) {
+	private static String mapToJson(Map map, int depth) {
 		if(map == null)
 			return "null";
 		
@@ -97,7 +97,7 @@ public class JsonKit {
 		return sb.toString();
 	}
 	
-	public static String listToJson(List list, int depth) {
+	private static String listToJson(List list, int depth) {
 		if(list == null)
 			return "null";
 		
@@ -255,7 +255,7 @@ public class JsonKit {
 			return listToJson(list, depth);
 		}
 		if (value instanceof Enum) {
-			return "\"" + ((Enum)value).name() + "\"";
+			return "\"" + ((Enum)value).toString() + "\"";
 		}
 		
 		return beanToJson(value, depth);

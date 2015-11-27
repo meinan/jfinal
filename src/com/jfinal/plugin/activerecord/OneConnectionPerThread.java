@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.jfinal.plugin.activerecord;
 
 import java.sql.Connection;
 import com.jfinal.aop.Interceptor;
-import com.jfinal.core.ActionInvocation;
+import com.jfinal.aop.Invocation;
 
 /**
  * One Connection Per Thread for one request.<br>
@@ -26,19 +26,29 @@ import com.jfinal.core.ActionInvocation;
  */
 public class OneConnectionPerThread implements Interceptor {
 	
-	public void intercept(ActionInvocation invocation) {
-		Connection conn = null;
+	public void intercept(Invocation inv) {
+		Connection conn = DbKit.config.getThreadLocalConnection();
+		if (conn != null) {
+			inv.invoke();
+			return ;
+		}
+		
 		try {
 			conn = DbKit.config.getConnection();
 			DbKit.config.setThreadLocalConnection(conn);
-			invocation.invoke();
+			inv.invoke();
+		}
+		catch (RuntimeException e) {
+			throw e;
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		finally {
 			DbKit.config.removeThreadLocalConnection();
-			DbKit.config.close(conn);
+			if (conn != null) {
+				try{conn.close();}catch(Exception e){};
+			}
 		}
 	}
 }

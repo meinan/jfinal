@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,12 +168,10 @@ public class ActiveRecordPlugin implements IPlugin {
 			config = new Config(configName, dataSource, dialect, showSql, devMode, transactionLevel, containerFactory, cache);
 		DbKit.addConfig(config);
 		
-		boolean succeed = TableBuilder.build(tableList, config);
-		if (succeed) {
-			Db.init();
-			isStarted = true;
-		}
-		return succeed;
+		TableBuilder.build(tableList, config);
+		Db.init();
+		isStarted = true;
+		return true;
 	}
 	
 	public boolean stop() {

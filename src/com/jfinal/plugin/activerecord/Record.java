@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,11 +85,20 @@ public class Record implements Serializable {
 	}
 	
 	/**
-	 * Set columns value with record.
-	 * @param record the record
+	 * Set columns value with Record.
+	 * @param record the Record object
 	 */
 	public Record setColumns(Record record) {
 		getColumns().putAll(record.getColumns());
+		return this;
+	}
+	
+	/**
+	 * Set columns value with Model object.
+	 * @param model the Model object
+	 */
+	public Record setColumns(Model<?> model) {
+		getColumns().putAll(model.getAttrs());
 		return this;
 	}
 	

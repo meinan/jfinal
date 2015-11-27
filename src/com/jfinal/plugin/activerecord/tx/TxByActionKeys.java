@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import com.jfinal.aop.Interceptor;
-import com.jfinal.core.ActionInvocation;
+import com.jfinal.aop.Invocation;
 import com.jfinal.plugin.activerecord.Config;
 import com.jfinal.plugin.activerecord.DbKit;
 import com.jfinal.plugin.activerecord.DbPro;
@@ -41,20 +41,20 @@ public class TxByActionKeys implements Interceptor {
 			actionKeySet.add(actionKey.trim());
 	}
 	
-	public void intercept(final ActionInvocation ai) {
-		Config config = Tx.getConfigWithTxConfig(ai);
+	public void intercept(final Invocation inv) {
+		Config config = Tx.getConfigWithTxConfig(inv);
 		if (config == null)
 			config = DbKit.getConfig();
 		
-		if (actionKeySet.contains(ai.getActionKey())) {
+		if (actionKeySet.contains(inv.getActionKey())) {
 			DbPro.use(config.getName()).tx(new IAtom(){
 				public boolean run() throws SQLException {
-					ai.invoke();
+					inv.invoke();
 					return true;
 				}});
 		}
 		else {
-			ai.invoke();
+			inv.invoke();
 		}
 	}
 }

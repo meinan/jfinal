@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.jfinal.core;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.jfinal.config.Constants;
+import com.jfinal.aop.Invocation;
 import com.jfinal.handler.Handler;
 import com.jfinal.log.Logger;
 import com.jfinal.render.Render;
@@ -43,11 +44,11 @@ final class ActionHandler extends Handler {
 	/**
 	 * handle
 	 * 1: Action action = actionMapping.getAction(target)
-	 * 2: new ActionInvocation(...).invoke()
+	 * 2: new Invocation(...).invoke()
 	 * 3: render(...)
 	 */
 	public final void handle(String target, HttpServletRequest request, HttpServletResponse response, boolean[] isHandled) {
-		if (target.indexOf(".") != -1) {
+		if (target.indexOf('.') != -1) {
 			return ;
 		}
 		
@@ -70,11 +71,11 @@ final class ActionHandler extends Handler {
 			
 			if (devMode) {
 				boolean isMultipartRequest = ActionReporter.reportCommonRequest(controller, action);
-				new ActionInvocation(action, controller).invoke();
+				new Invocation(action, controller).invoke();
 				if (isMultipartRequest) ActionReporter.reportMultipartRequest(controller, action);
 			}
 			else {
-				new ActionInvocation(action, controller).invoke();
+				new Invocation(action, controller).invoke();
 			}
 			
 			Render render = controller.getRender();
@@ -115,14 +116,14 @@ final class ActionHandler extends Handler {
 				String qs = request.getQueryString();
 				log.error(qs == null ? target : target + "?" + qs, e);
 			}
-			e.getErrorRender().setContext(request, response).render();
+			e.getErrorRender().setContext(request, response, action.getViewPath()).render();
 		}
-		catch (Exception e) {
+		catch (Throwable t) {
 			if (log.isErrorEnabled()) {
 				String qs = request.getQueryString();
-				log.error(qs == null ? target : target + "?" + qs, e);
+				log.error(qs == null ? target : target + "?" + qs, t);
 			}
-			renderFactory.getErrorRender(500).setContext(request, response).render();
+			renderFactory.getErrorRender(500).setContext(request, response, action.getViewPath()).render();
 		}
 	}
 }

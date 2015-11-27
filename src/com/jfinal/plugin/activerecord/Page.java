@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,13 @@ public class Page<T> implements Serializable {
 	public int getTotalRow() {
 		return totalRow;
 	}
+	
+	public boolean isFirstPage() {
+		return pageNumber == 1;
+	}
+	
+	public boolean isLastPage() {
+		return pageNumber == totalPage;
+	}
 }
-
 

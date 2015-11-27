@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,11 +86,11 @@ public abstract class Routes {
 	
 	/**
 	 * Add url mapping to controller. The view path is controllerKey
-	 * @param controllerkey A key can find controller
+	 * @param controllerKey A key can find controller
 	 * @param controllerClass Controller Class
 	 */
-	public Routes add(String controllerkey, Class<? extends Controller> controllerClass) {
-		return add(controllerkey, controllerClass, controllerkey);
+	public Routes add(String controllerKey, Class<? extends Controller> controllerClass) {
+		return add(controllerKey, controllerClass, controllerKey);
 	}
 	
 	public Set<Entry<String, Class<? extends Controller>>> getEntrySet() {

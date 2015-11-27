@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Before is used to configure Interceptor or Validator.
+ * Before is used to configure Interceptor and Validator.
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
@@ -31,3 +31,5 @@ import java.lang.annotation.Target;
 public @interface Before {
 	Class<? extends Interceptor>[] value();
 }
+
+

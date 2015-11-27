@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.jfinal.plugin.activerecord;
 
+import java.util.Collections;
 import java.util.Map;
 import com.jfinal.kit.StrKit;
 
@@ -25,8 +26,7 @@ import com.jfinal.kit.StrKit;
 public class Table {
 	
 	private String name;
-	private String primaryKey;
-	private String secondaryKey = null;
+	private String[] primaryKey = null;
 	private Map<String, Class<?>> columnTypeMap;	// config.containerFactory.getAttrsMap();
 	
 	private Class<? extends Model<?>> modelClass;
@@ -50,21 +50,15 @@ public class Table {
 			throw new IllegalArgumentException("Model class can not be null.");
 		
 		this.name = name.trim();
-		setPrimaryKey(primaryKey.trim());	// this.primaryKey = primaryKey.trim();
+		setPrimaryKey(primaryKey.trim());
 		this.modelClass = modelClass;
 	}
 	
 	void setPrimaryKey(String primaryKey) {
-		String[] keyArr = primaryKey.split(",");
-		if (keyArr.length > 1) {
-			if (StrKit.isBlank(keyArr[0]) || StrKit.isBlank(keyArr[1]))
-				throw new IllegalArgumentException("The composite primary key can not be blank.");
-			this.primaryKey = keyArr[0].trim();
-			this.secondaryKey = keyArr[1].trim();
-		}
-		else {
-			this.primaryKey = primaryKey;
-		}
+		String[] arr = primaryKey.split(",");
+		for (int i=0; i<arr.length; i++)
+			arr[i] = arr[i].trim();
+		this.primaryKey = arr;
 	}
 	
 	void setColumnTypeMap(Map<String, Class<?>> columnTypeMap) {
@@ -78,7 +72,7 @@ public class Table {
 		return name;
 	}
 	
-	public void setColumnType(String columnLabel, Class<?> columnType) {
+	void setColumnType(String columnLabel, Class<?> columnType) {
 		columnTypeMap.put(columnLabel, columnType);
 	}
 	
@@ -97,19 +91,18 @@ public class Table {
 	/**
 	 * update() and delete() need this method.
 	 */
-	public String getPrimaryKey() {
+	public String[] getPrimaryKey() {
 		return primaryKey;
-	}
-	
-	public String getSecondaryKey() {
-		return secondaryKey;
 	}
 	
 	public Class<? extends Model<?>> getModelClass() {
 		return modelClass;
 	}
+	
+	public Map<String, Class<?>> getColumnTypeMap() {
+		return Collections.unmodifiableMap(columnTypeMap);
+	}
 }
-
 
 
 

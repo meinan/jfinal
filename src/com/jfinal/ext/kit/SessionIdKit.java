@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,13 @@ public class SessionIdKit {
 	
     protected static Random random;
     private static boolean weakRandom;
-    private static volatile Object lock = new Object();
     
-    private static final SessionIdKit me = new SessionIdKit();
+    /**
+     * Lazy initialization holder class pattern
+     */
+    private static class FieldHolder {
+    	static final SessionIdKit sessionIdKit = new SessionIdKit();
+    }
     
     private SessionIdKit() {
     	try {
@@ -48,11 +52,11 @@ public class SessionIdKit {
     }
     
     public static final SessionIdKit me() {
-    	return me;
+    	return FieldHolder.sessionIdKit;
     }
     
 	public String generate(HttpServletRequest request) {
-        synchronized (lock) {
+        synchronized(this) {
             String id = null;
             while (id == null || id.length() == 0) {	//)||idInUse(id))
                 long r0 = weakRandom ? (hashCode()^Runtime.getRuntime().freeMemory()^random.nextInt()^(((long)request.hashCode())<<32)) : random.nextLong();

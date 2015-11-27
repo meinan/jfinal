@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,18 +290,6 @@ public class DbPro {
 		return update(sql, NULL_PARA_ARRAY);
 	}
 	
-	/**
-	 * Get id after insert method getGeneratedKey().
-	 */
-	private Object getGeneratedKey(PreparedStatement pst) throws SQLException {
-		ResultSet rs = pst.getGeneratedKeys();
-		Object id = null;
-		if (rs.next())
-			 id = rs.getObject(1);
-		rs.close();
-		return id;
-	}
-	
 	List<Record> find(Config config, Connection conn, String sql, Object... paras) throws SQLException {
 		PreparedStatement pst = conn.prepareStatement(sql);
 		config.dialect.fillStatement(pst, paras);
@@ -355,83 +343,82 @@ public class DbPro {
 	}
 	
 	/**
-	 * Find record by id.
-	 * Example: Record user = DbPro.use().findById("user", 15);
+	 * Find record by id with default primary key.
+	 * <pre>
+	 * Example:
+	 * Record user = DbPro.use().findById("user", 15);
+	 * </pre>
 	 * @param tableName the table name of the table
 	 * @param idValue the id value of the record
 	 */
 	public Record findById(String tableName, Object idValue) {
-		return findById(tableName, config.dialect.getDefaultPrimaryKey(), idValue, "*");
-	}
-	
-	/**
-	 * Find record by id. Fetch the specific columns only.
-	 * Example: Record user = DbPro.use().findById("user", 15, "name, age");
-	 * @param tableName the table name of the table
-	 * @param idValue the id value of the record
-	 * @param columns the specific columns separate with comma character ==> ","
-	 */
-	public Record findById(String tableName, Number idValue, String columns) {
-		return findById(tableName, config.dialect.getDefaultPrimaryKey(), idValue, columns);
+		return findById(tableName, config.dialect.getDefaultPrimaryKey(), idValue);
 	}
 	
 	/**
 	 * Find record by id.
-	 * Example: Record user = DbPro.use().findById("user", "user_id", 15);
+	 * <pre>
+	 * Example:
+	 * Record user = DbPro.use().findById("user", "user_id", 123);
+	 * Record userRole = DbPro.use().findById("user_role", "user_id, role_id", 123, 456);
+	 * </pre>
 	 * @param tableName the table name of the table
-	 * @param primaryKey the primary key of the table
-	 * @param idValue the id value of the record
+	 * @param primaryKey the primary key of the table, composite primary key is separated by comma character: ","
+	 * @param idValue the id value of the record, it can be composite id values
 	 */
-	public Record findById(String tableName, String primaryKey, Number idValue) {
-		return findById(tableName, primaryKey, idValue, "*");
-	}
-	
-	/**
-	 * Find record by id. Fetch the specific columns only.
-	 * Example: Record user = DbPro.use().findById("user", "user_id", 15, "name, age");
-	 * @param tableName the table name of the table
-	 * @param primaryKey the primary key of the table
-	 * @param idValue the id value of the record
-	 * @param columns the specific columns separate with comma character ==> ","
-	 */
-	public Record findById(String tableName, String primaryKey, Object idValue, String columns) {
-		String sql = config.dialect.forDbFindById(tableName, primaryKey, columns);
+	public Record findById(String tableName, String primaryKey, Object... idValue) {
+		String[] pKeys = primaryKey.split(",");
+		if (pKeys.length != idValue.length)
+			throw new IllegalArgumentException("primary key number must equals id value number");
+		
+		String sql = config.dialect.forDbFindById(tableName, pKeys);
 		List<Record> result = find(sql, idValue);
 		return result.size() > 0 ? result.get(0) : null;
 	}
 	
 	/**
-	 * Delete record by id.
-	 * Example: boolean succeed = DbPro.use().deleteById("user", 15);
+	 * Delete record by id with default primary key.
+	 * <pre>
+	 * Example:
+	 * DbPro.use().deleteById("user", 15);
+	 * </pre>
 	 * @param tableName the table name of the table
-	 * @param id the id value of the record
+	 * @param idValue the id value of the record
 	 * @return true if delete succeed otherwise false
 	 */
-	public boolean deleteById(String tableName, Object id) {
-		return deleteById(tableName, config.dialect.getDefaultPrimaryKey(), id);
+	public boolean deleteById(String tableName, Object idValue) {
+		return deleteById(tableName, config.dialect.getDefaultPrimaryKey(), idValue);
 	}
 	
 	/**
 	 * Delete record by id.
-	 * Example: boolean succeed = DbPro.use().deleteById("user", "user_id", 15);
+	 * <pre>
+	 * Example:
+	 * DbPro.use().deleteById("user", "user_id", 15);
+	 * DbPro.use().deleteById("user_role", "user_id, role_id", 123, 456);
+	 * </pre>
 	 * @param tableName the table name of the table
-	 * @param primaryKey the primary key of the table
-	 * @param id the id value of the record
+	 * @param primaryKey the primary key of the table, composite primary key is separated by comma character: ","
+	 * @param idValue the id value of the record, it can be composite id values
 	 * @return true if delete succeed otherwise false
 	 */
-	public boolean deleteById(String tableName, String primaryKey, Object id) {
-		if (id == null)
-			throw new IllegalArgumentException("id can not be null");
+	public boolean deleteById(String tableName, String primaryKey, Object... idValue) {
+		String[] pKeys = primaryKey.split(",");
+		if (pKeys.length != idValue.length)
+			throw new IllegalArgumentException("primary key number must equals id value number");
 		
-		String sql = config.dialect.forDbDeleteById(tableName, primaryKey);
-		return update(sql, id) >= 1;
+		String sql = config.dialect.forDbDeleteById(tableName, pKeys);
+		return update(sql, idValue) >= 1;
 	}
 	
 	/**
 	 * Delete record.
-	 * Example: boolean succeed = DbPro.use().delete("user", "id", user);
+	 * <pre>
+	 * Example:
+	 * boolean succeed = DbPro.use().delete("user", "id", user);
+	 * </pre>
 	 * @param tableName the table name of the table
-	 * @param primaryKey the primary key of the table
+	 * @param primaryKey the primary key of the table, composite primary key is separated by comma character: ","
 	 * @param record the record
 	 * @return true if delete succeed otherwise false
 	 */
@@ -440,7 +427,10 @@ public class DbPro {
 	}
 	
 	/**
-	 * Example: boolean succeed = DbPro.use().delete("user", user);
+	 * <pre>
+	 * Example:
+	 * boolean succeed = DbPro.use().delete("user", user);
+	 * </pre>
 	 * @see #delete(String, String, Record)
 	 */
 	public boolean delete(String tableName, Record record) {
@@ -470,6 +460,9 @@ public class DbPro {
 		if (totalRow % pageSize != 0) {
 			totalPage++;
 		}
+		
+		if (pageNumber > totalPage)
+			return new Page<Record>(new ArrayList<Record>(0), pageNumber, pageSize, totalPage, (int)totalRow);
 		
 		// --------
 		StringBuilder sql = new StringBuilder();
@@ -501,27 +494,45 @@ public class DbPro {
 	}
 	
 	boolean save(Config config, Connection conn, String tableName, String primaryKey, Record record) throws SQLException {
+		String[] pKeys = primaryKey.split(",");
 		List<Object> paras = new ArrayList<Object>();
 		StringBuilder sql = new StringBuilder();
-		config.dialect.forDbSave(sql, paras, tableName, record);
+		config.dialect.forDbSave(sql, paras, tableName, pKeys, record);
 		
 		PreparedStatement pst;
 		if (config.dialect.isOracle())
-			pst = conn.prepareStatement(sql.toString(), new String[]{primaryKey});
+			pst = conn.prepareStatement(sql.toString(), pKeys);
 		else
 			pst = conn.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
 			
 		config.dialect.fillStatement(pst, paras);
 		int result = pst.executeUpdate();
-		record.set(primaryKey, getGeneratedKey(pst));
+		getGeneratedKey(pst, record, pKeys);
 		DbKit.closeQuietly(pst);
 		return result >= 1;
 	}
 	
 	/**
+	 * Get id after save record.
+	 */
+	private void getGeneratedKey(PreparedStatement pst, Record record, String[] pKeys) throws SQLException {
+		ResultSet rs = pst.getGeneratedKeys();
+		for (String pKey : pKeys)
+			if (record.get(pKey) == null || config.dialect.isOracle())
+				if (rs.next())
+					record.set(pKey, rs.getObject(1));
+		rs.close();
+	}
+	
+	/**
 	 * Save record.
+	 * <pre>
+	 * Example:
+	 * Record userRole = new Record().set("user_id", 123).set("role_id", 456);
+	 * DbPro.use().save("user_role", "user_id, role_id", userRole);
+	 * </pre>
 	 * @param tableName the table name of the table
-	 * @param primaryKey the primary key of the table
+	 * @param primaryKey the primary key of the table, composite primary key is separated by comma character: ","
 	 * @param record the record will be saved
 	 * @param true if save succeed otherwise false
 	 */
@@ -545,13 +556,18 @@ public class DbPro {
 	}
 	
 	boolean update(Config config, Connection conn, String tableName, String primaryKey, Record record) throws SQLException {
-		Object id = record.get(primaryKey);
-		if (id == null)
-			throw new ActiveRecordException("You can't update model without Primary Key.");
+		String[] pKeys = primaryKey.split(",");
+		Object[] ids = new Object[pKeys.length];
+		
+		for (int i=0; i<pKeys.length; i++) {
+			ids[i] = record.get(pKeys[i].trim());	// .trim() is important!
+			if (ids[i] == null)
+				throw new ActiveRecordException("You can't update record without Primary Key, " + pKeys[i] + " can not be null.");
+		}
 		
 		StringBuilder sql = new StringBuilder();
 		List<Object> paras = new ArrayList<Object>();
-		config.dialect.forDbUpdate(tableName, primaryKey, id, record, sql, paras);
+		config.dialect.forDbUpdate(tableName, pKeys, ids, record, sql, paras);
 		
 		if (paras.size() <= 1) {	// Needn't update
 			return false;
@@ -562,8 +578,12 @@ public class DbPro {
 	
 	/**
 	 * Update Record.
+	 * <pre>
+	 * Example:
+	 * DbPro.use().update("user_role", "user_id, role_id", record);
+	 * </pre>
 	 * @param tableName the table name of the Record save to
-	 * @param primaryKey the primary key of the table
+	 * @param primaryKey the primary key of the table, composite primary key is separated by comma character: ","
 	 * @param record the Record object
 	 * @param true if update succeed otherwise false
 	 */
@@ -580,7 +600,11 @@ public class DbPro {
 	}
 	
 	/**
-	 * Update Record. The primary key of the table is: "id".
+	 * Update record with default primary key.
+	 * <pre>
+	 * Example:
+	 * DbPro.use().update("user", record);
+	 * </pre>
 	 * @see #update(String, String, Record)
 	 */
 	public boolean update(String tableName, Record record) {
@@ -603,7 +627,7 @@ public class DbPro {
 		Connection conn = null;
 		try {
 			conn = config.getConnection();
-			return callback.run(conn);
+			return callback.call(conn);
 		} catch (Exception e) {
 			throw new ActiveRecordException(e);
 		} finally {
@@ -650,9 +674,9 @@ public class DbPro {
 		} catch (NestedTransactionHelpException e) {
 			if (conn != null) try {conn.rollback();} catch (Exception e1) {e1.printStackTrace();}
 			return false;
-		} catch (Exception e) {
+		} catch (Throwable t) {
 			if (conn != null) try {conn.rollback();} catch (Exception e1) {e1.printStackTrace();}
-			throw e instanceof RuntimeException ? (RuntimeException)e : new ActiveRecordException(e);
+			throw t instanceof RuntimeException ? (RuntimeException)t : new ActiveRecordException(t);
 		} finally {
 			try {
 				if (conn != null) {
@@ -660,8 +684,8 @@ public class DbPro {
 						conn.setAutoCommit(autoCommit);
 					conn.close();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();	// can not throw exception here, otherwise the more important exception in previous catch block can not be thrown
+			} catch (Throwable t) {
+				t.printStackTrace();	// can not throw exception here, otherwise the more important exception in previous catch block can not be thrown
 			} finally {
 				config.removeThreadLocalConnection();	// prevent memory leak
 			}
@@ -705,6 +729,32 @@ public class DbPro {
 	}
 	
 	/**
+	 * Find first record by cache. I recommend add "limit 1" in your sql.
+	 * @see #findFirst(String, Object...)
+	 * @param cacheName the cache name
+	 * @param key the key used to get date from cache
+	 * @param sql an SQL statement that may contain one or more '?' IN parameter placeholders
+	 * @param paras the parameters of sql
+	 * @return the Record object
+	 */
+	public Record findFirstByCache(String cacheName, Object key, String sql, Object... paras) {
+		ICache cache = config.getCache();
+		Record result = cache.get(cacheName, key);
+		if (result == null) {
+			result = findFirst(sql, paras);
+			cache.put(cacheName, key, result);
+		}
+		return result;
+	}
+	
+	/**
+	 * @see #findFirstByCache(String, Object, String, Object...)
+	 */
+	public Record findFirstByCache(String cacheName, Object key, String sql) {
+		return findFirstByCache(cacheName, key, sql, NULL_PARA_ARRAY);
+	}
+	
+	/**
 	 * Paginate by cache.
 	 * @see #paginate(int, int, String, String, Object...)
 	 * @return Page
@@ -731,6 +781,8 @@ public class DbPro {
 			throw new IllegalArgumentException("The paras array length must more than 0.");
 		if (batchSize < 1)
 			throw new IllegalArgumentException("The batchSize must more than 0.");
+		
+		boolean isInTransaction = config.isInTransaction();
 		int counter = 0;
 		int pointer = 0;
 		int[] result = new int[paras.length];
@@ -738,8 +790,14 @@ public class DbPro {
 		for (int i=0; i<paras.length; i++) {
 			for (int j=0; j<paras[i].length; j++) {
 				Object value = paras[i][j];
-				if (config.dialect.isOracle() && value instanceof java.sql.Date)
-					pst.setDate(j + 1, (java.sql.Date)value);
+				if (config.dialect.isOracle()) {
+					if (value instanceof java.sql.Date)
+						pst.setDate(j + 1, (java.sql.Date)value);
+					else if (value instanceof java.sql.Timestamp)
+						pst.setTimestamp(j + 1, (java.sql.Timestamp)value);
+					else
+						pst.setObject(j + 1, value);
+				}
 				else
 					pst.setObject(j + 1, value);
 			}
@@ -747,13 +805,15 @@ public class DbPro {
 			if (++counter >= batchSize) {
 				counter = 0;
 				int[] r = pst.executeBatch();
-				conn.commit();
+				if (isInTransaction == false)
+					conn.commit();
 				for (int k=0; k<r.length; k++)
 					result[pointer++] = r[k];
 			}
 		}
 		int[] r = pst.executeBatch();
-		conn.commit();
+		if (isInTransaction == false)
+			conn.commit();
 		for (int k=0; k<r.length; k++)
 			result[pointer++] = r[k];
 		DbKit.closeQuietly(pst);
@@ -762,9 +822,8 @@ public class DbPro {
 	
     /**
      * Execute a batch of SQL INSERT, UPDATE, or DELETE queries.
-     * <p>
-     * Example:
      * <pre>
+     * Example:
      * String sql = "insert into user(name, cash) values(?, ?)";
      * int[] result = DbPro.use().batch("myConfig", sql, new Object[][]{{"James", 888}, {"zhanjin", 888}});
      * </pre>
@@ -803,6 +862,7 @@ public class DbPro {
 		for (int i=0; i<columnArray.length; i++)
 			columnArray[i] = columnArray[i].trim();
 		
+		boolean isInTransaction = config.isInTransaction();
 		int counter = 0;
 		int pointer = 0;
 		int size = list.size();
@@ -812,8 +872,14 @@ public class DbPro {
 			Map map = isModel ? ((Model)list.get(i)).getAttrs() : ((Record)list.get(i)).getColumns();
 			for (int j=0; j<columnArray.length; j++) {
 				Object value = map.get(columnArray[j]);
-				if (config.dialect.isOracle() && value instanceof java.sql.Date)
-					pst.setDate(j + 1, (java.sql.Date)value);
+				if (config.dialect.isOracle()) {
+					if (value instanceof java.sql.Date)
+						pst.setDate(j + 1, (java.sql.Date)value);
+					else if (value instanceof java.sql.Timestamp)
+						pst.setTimestamp(j + 1, (java.sql.Timestamp)value);
+					else
+						pst.setObject(j + 1, value);
+				}
 				else
 					pst.setObject(j + 1, value);
 			}
@@ -821,13 +887,15 @@ public class DbPro {
 			if (++counter >= batchSize) {
 				counter = 0;
 				int[] r = pst.executeBatch();
-				conn.commit();
+				if (isInTransaction == false)
+					conn.commit();
 				for (int k=0; k<r.length; k++)
 					result[pointer++] = r[k];
 			}
 		}
 		int[] r = pst.executeBatch();
-		conn.commit();
+		if (isInTransaction == false)
+			conn.commit();
 		for (int k=0; k<r.length; k++)
 			result[pointer++] = r[k];
 		DbKit.closeQuietly(pst);
@@ -836,9 +904,8 @@ public class DbPro {
 	
 	/**
      * Execute a batch of SQL INSERT, UPDATE, or DELETE queries.
-     * <p>
-     * Example:
      * <pre>
+     * Example:
      * String sql = "insert into user(name, cash) values(?, ?)";
      * int[] result = DbPro.use().batch("myConfig", sql, "name, cash", modelList, 500);
      * </pre>
@@ -870,6 +937,8 @@ public class DbPro {
 			throw new IllegalArgumentException("The sqlList length must more than 0.");
 		if (batchSize < 1)
 			throw new IllegalArgumentException("The batchSize must more than 0.");
+		
+		boolean isInTransaction = config.isInTransaction();
 		int counter = 0;
 		int pointer = 0;
 		int size = sqlList.size();
@@ -880,13 +949,15 @@ public class DbPro {
 			if (++counter >= batchSize) {
 				counter = 0;
 				int[] r = st.executeBatch();
-				conn.commit();
+				if (isInTransaction == false)
+					conn.commit();
 				for (int k=0; k<r.length; k++)
 					result[pointer++] = r[k];
 			}
 		}
 		int[] r = st.executeBatch();
-		conn.commit();
+		if (isInTransaction == false)
+			conn.commit();
 		for (int k=0; k<r.length; k++)
 			result[pointer++] = r[k];
 		DbKit.closeQuietly(st);
@@ -895,8 +966,8 @@ public class DbPro {
 	
     /**
      * Execute a batch of SQL INSERT, UPDATE, or DELETE queries.
-     * Example:
      * <pre>
+     * Example:
      * int[] result = DbPro.use().batch("myConfig", sqlList, 500);
      * </pre>
 	 * @param sqlList The SQL list to execute.
@@ -918,6 +989,13 @@ public class DbPro {
 				try {conn.setAutoCommit(autoCommit);} catch (Exception e) {e.printStackTrace();}
 			config.close(conn);
 		}
+    }
+    
+    /**
+     * for DbKit.removeConfig(configName)
+     */
+    static void removeDbProWithConfig(String configName) {
+    	map.remove(configName);
     }
 }
 

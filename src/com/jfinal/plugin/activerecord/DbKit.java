@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011-2014, James Zhan 詹波 (jfinal@126.com).
+ * Copyright (c) 2011-2015, James Zhan 詹波 (jfinal@126.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,8 +109,21 @@ public final class DbKit {
 		}
 		return sql;
 	}
+	
+	public static Config removeConfig(String configName) {
+		if (DbKit.config != null && DbKit.config.getName().equals(configName))
+			throw new RuntimeException("Can not remove the main config.");
+		
+		DbPro.removeDbProWithConfig(configName);
+		return configNameToConfig.remove(configName);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Class<? extends Model> getUsefulClass(Class<? extends Model> modelClass) {
+		// com.demo.blog.Blog$$EnhancerByCGLIB$$69a17158
+		return (Class<? extends Model>)((modelClass.getName().indexOf("EnhancerByCGLIB") == -1 ? modelClass : modelClass.getSuperclass()));
+	}
 }
-
 
 
 
